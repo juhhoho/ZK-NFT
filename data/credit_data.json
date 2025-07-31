@@ -1,0 +1,70 @@
+{
+  "customers": {
+    "CUST_001": {
+      "name": "김철수",
+      "credit_score": 750,
+      "income": 50000000,
+      "debt_ratio": 0.3,
+      "payment_history": "excellent",
+      "employment_status": "full_time",
+      "residence_stability": 5,
+      "credit_history_years": 8,
+      "number_of_accounts": 3,
+      "recent_inquiries": 1
+    },
+    "CUST_002": {
+      "name": "이영희",
+      "credit_score": 820,
+      "income": 70000000,
+      "debt_ratio": 0.2,
+      "payment_history": "excellent",
+      "employment_status": "full_time",
+      "residence_stability": 8,
+      "credit_history_years": 12,
+      "number_of_accounts": 5,
+      "recent_inquiries": 0
+    },
+    "CUST_003": {
+      "name": "박민수",
+      "credit_score": 650,
+      "income": 35000000,
+      "debt_ratio": 0.5,
+      "payment_history": "good",
+      "employment_status": "full_time",
+      "residence_stability": 3,
+      "credit_history_years": 5,
+      "number_of_accounts": 2,
+      "recent_inquiries": 3
+    },
+    "CUST_004": {
+      "name": "최지영",
+      "credit_score": 920,
+      "income": 90000000,
+      "debt_ratio": 0.15,
+      "payment_history": "excellent",
+      "employment_status": "full_time",
+      "residence_stability": 10,
+      "credit_history_years": 15,
+      "number_of_accounts": 7,
+      "recent_inquiries": 0
+    },
+    "CUST_005": {
+      "name": "정현우",
+      "credit_score": 580,
+      "income": 28000000,
+      "debt_ratio": 0.6,
+      "payment_history": "fair",
+      "employment_status": "part_time",
+      "residence_stability": 2,
+      "credit_history_years": 3,
+      "number_of_accounts": 1,
+      "recent_inquiries": 5
+    }
+  },
+  "metadata": {
+    "last_updated": "2024-01-15T00:00:00Z",
+    "total_customers": 5,
+    "data_source": "mock_credit_bureau",
+    "version": "1.0.0"
+  }
+} 

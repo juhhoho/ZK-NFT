@@ -1,0 +1,30 @@
+{
+  "name": "zk-nft-blockchain",
+  "version": "1.0.0",
+  "description": "zk-nft 블록체인 관련 코드",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network localhost",
+    "node": "hardhat node",
+    "clean": "hardhat clean"
+  },
+  "keywords": [
+    "blockchain",
+    "nft",
+    "zk-proof",
+    "ethereum",
+    "hardhat"
+  ],
+  "author": "zk-nft team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "hardhat": "^2.17.0"
+  },
+  "dependencies": {
+    "web3": "^1.10.0"
+  }
+} 

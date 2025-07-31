@@ -1,0 +1,63 @@
+{
+  "bank_id": "BANK_001",
+  "bank_name": "zk-nft 은행",
+  "credit_score_ranges": {
+    "A": {
+      "min": 800,
+      "max": 1000,
+      "description": "최우량",
+      "interest_rate": 2.5,
+      "processing_fee": 0.1
+    },
+    "B": {
+      "min": 700,
+      "max": 799,
+      "description": "우량",
+      "interest_rate": 3.5,
+      "processing_fee": 0.2
+    },
+    "C": {
+      "min": 600,
+      "max": 699,
+      "description": "보통",
+      "interest_rate": 5.0,
+      "processing_fee": 0.5
+    },
+    "D": {
+      "min": 500,
+      "max": 599,
+      "description": "주의",
+      "interest_rate": 8.0,
+      "processing_fee": 1.0
+    },
+    "E": {
+      "min": 0,
+      "max": 499,
+      "description": "위험",
+      "interest_rate": 12.0,
+      "processing_fee": 2.0
+    }
+  },
+  "loan_limits": {
+    "A": 100000000,
+    "B": 50000000,
+    "C": 20000000,
+    "D": 5000000,
+    "E": 0
+  },
+  "additional_criteria": {
+    "minimum_income": 20000000,
+    "maximum_debt_ratio": 0.7,
+    "minimum_employment_years": 1,
+    "minimum_residence_years": 1
+  },
+  "processing_time": {
+    "A": "1-2 business days",
+    "B": "2-3 business days",
+    "C": "3-5 business days",
+    "D": "5-7 business days",
+    "E": "Not eligible"
+  },
+  "last_updated": "2024-01-15T00:00:00Z",
+  "version": "1.0.0"
+} 

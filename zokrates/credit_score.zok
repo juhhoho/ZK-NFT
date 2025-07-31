@@ -1,0 +1,31 @@
+// 신용등급 ZK-Proof 프로그램
+// 신용점수, 신용등급, 최대 대출 가능 금액을 입력받아 ZK-Proof를 생성합니다.
+
+def main(
+    private field credit_score,
+    private field credit_grade,
+    private field max_loan_amount
+) {
+    // 신용점수 범위 검증 (0-1000)
+    assert(credit_score <= 1000);
+    
+    // 신용등급 검증 (A=1, B=2, C=3, D=4, E=5)
+    assert(credit_grade >= 1);
+    assert(credit_grade <= 5);
+    
+    // 신용등급별 최대 대출 가능 금액 검증
+    assert((credit_grade == 1 && max_loan_amount <= 100000000) ||
+           (credit_grade == 2 && max_loan_amount <= 50000000) ||
+           (credit_grade == 3 && max_loan_amount <= 20000000) ||
+           (credit_grade == 4 && max_loan_amount <= 5000000) ||
+           (credit_grade == 5 && max_loan_amount == 0));
+    
+    // 신용점수와 신용등급의 일관성 검증
+    assert((credit_score >= 800 && credit_grade == 1) ||
+           (credit_score >= 700 && credit_score < 800 && credit_grade == 2) ||
+           (credit_score >= 600 && credit_score < 700 && credit_grade == 3) ||
+           (credit_score >= 500 && credit_score < 600 && credit_grade == 4) ||
+           (credit_score < 500 && credit_grade == 5));
+    
+    return;
+} 
