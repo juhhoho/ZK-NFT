@@ -16,7 +16,7 @@ from datetime import datetime
 class ZKPUtils:
     """Zero-Knowledge Proof 유틸리티 클래스"""
     
-    def __init__(self, zokrates_image: str = "zokrates/zokrates:0.8.17"):
+    def __init__(self, zokrates_image: str = "zokrates/zokrates:latest"):
         """
         ZKP 유틸리티 초기화
         
@@ -24,7 +24,20 @@ class ZKPUtils:
             zokrates_image: ZoKrates Docker 이미지명
         """
         self.zokrates_image = zokrates_image
-        self.workspace_dir = os.path.join(os.getcwd(), 'zokrates')
+        
+        # 현재 작업 디렉토리에서 zokrates 폴더를 찾기
+        current_dir = os.getcwd()
+        zokrates_dir = os.path.join(current_dir, 'zokrates')
+        
+        # 만약 현재 디렉토리가 이미 zokrates라면, 상위 디렉토리에서 찾기
+        if os.path.basename(current_dir) == 'zokrates':
+            zokrates_dir = current_dir
+        elif not os.path.exists(zokrates_dir):
+            # 상위 디렉토리에서 zokrates 폴더 찾기
+            parent_dir = os.path.dirname(current_dir)
+            zokrates_dir = os.path.join(parent_dir, 'zokrates')
+            
+        self.workspace_dir = zokrates_dir
         
     def compile_zokrates_program(self, program_file: str) -> Dict:
         """
@@ -89,7 +102,7 @@ class ZKPUtils:
                 f'{self.workspace_dir}:/home/zokrates/code',
                 '-w', '/home/zokrates/code',
                 self.zokrates_image,
-                'zokrates', 'setup', '-i', f'{program_file}.out'
+                'zokrates', 'setup', '-i', 'out'
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -104,7 +117,7 @@ class ZKPUtils:
                 return {
                     'status': 'error',
                     'message': 'ZoKrates setup failed',
-                    'error': result.stderr
+                    'error': f"Command: {' '.join(cmd)}\nReturn code: {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"
                 }
                 
         except Exception as e:
@@ -131,7 +144,7 @@ class ZKPUtils:
                 f'{self.workspace_dir}:/home/zokrates/code',
                 '-w', '/home/zokrates/code',
                 self.zokrates_image,
-                'zokrates', 'compute-witness', '-i', f'{program_file}.out', '-a'
+                'zokrates', 'compute-witness', '-i', 'out', '-a'
             ] + inputs
             
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -172,7 +185,7 @@ class ZKPUtils:
                 f'{self.workspace_dir}:/home/zokrates/code',
                 '-w', '/home/zokrates/code',
                 self.zokrates_image,
-                'zokrates', 'generate-proof', '-i', f'{program_file}.out'
+                'zokrates', 'generate-proof', '-i', 'out'
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -225,7 +238,7 @@ class ZKPUtils:
                 f'{self.workspace_dir}:/home/zokrates/code',
                 '-w', '/home/zokrates/code',
                 self.zokrates_image,
-                'zokrates', 'verify', '-i', f'{program_file}.out'
+                'zokrates', 'verify'
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -253,40 +266,86 @@ class ZKPUtils:
     def create_credit_score_proof(self, credit_score: int, credit_grade: str, 
                                  max_loan_amount: int) -> Dict:
         """
-        신용등급 정보를 기반으로 ZK-Proof를 생성합니다.
+        신용등급 정보를 기반으로 실제 ZoKrates ZK-Proof를 생성합니다.
         
         Args:
             credit_score: 신용점수
-            credit_grade: 신용등급
+            credit_grade: 신용등급 (A, B, C, D, E)
             max_loan_amount: 최대 대출 가능 금액
             
         Returns:
             ZK-Proof 생성 결과
         """
         try:
-            # Mock ZK-Proof 생성 (실제로는 ZoKrates를 사용)
+            # 신용등급을 숫자로 변환 (A=1, B=2, C=3, D=4, E=5)
+            grade_mapping = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5}
+            credit_grade_num = grade_mapping.get(credit_grade.upper(), 5)
+            
+            # ZoKrates 프로그램 컴파일
+            compile_result = self.compile_zokrates_program('credit_score.zok')
+            if compile_result['status'] != 'success':
+                return {
+                    'status': 'error',
+                    'message': 'ZoKrates compilation failed',
+                    'error': compile_result.get('error', 'Unknown compilation error')
+                }
+            
+            # ZoKrates setup 실행
+            setup_result = self.setup_zokrates_program('credit_score')
+            if setup_result['status'] != 'success':
+                return {
+                    'status': 'error',
+                    'message': 'ZoKrates setup failed',
+                    'error': setup_result.get('error', 'Unknown setup error')
+                }
+            
+            # Witness 계산
+            inputs = [str(credit_score), str(credit_grade_num), str(max_loan_amount)]
+            witness_result = self.compute_witness('credit_score', inputs)
+            if witness_result['status'] != 'success':
+                return {
+                    'status': 'error',
+                    'message': 'Witness computation failed',
+                    'error': witness_result.get('error', 'Unknown witness error')
+                }
+            
+            # Proof 생성
+            proof_result = self.generate_proof('credit_score')
+            if proof_result['status'] != 'success':
+                return {
+                    'status': 'error',
+                    'message': 'Proof generation failed',
+                    'error': proof_result.get('error', 'Unknown proof generation error')
+                }
+            
+            # Proof 검증
+            verify_result = self.verify_proof('credit_score')
+            if verify_result['status'] != 'success':
+                return {
+                    'status': 'error',
+                    'message': 'Proof verification failed',
+                    'error': verify_result.get('error', 'Unknown verification error')
+                }
+            
+            # 결과 데이터 구성
             proof_data = {
                 'proof_id': f'PROOF_{int(time.time() * 1000000)}_{str(uuid.uuid4())[:8]}',
-                'credit_score_hash': hashlib.sha256(str(credit_score).encode()).hexdigest(),
-                'credit_grade_hash': hashlib.sha256(credit_grade.encode()).hexdigest(),
-                'max_loan_amount_hash': hashlib.sha256(str(max_loan_amount).encode()).hexdigest(),
+                'credit_score': credit_score,
+                'credit_grade': credit_grade,
+                'max_loan_amount': max_loan_amount,
                 'proof_timestamp': datetime.now().isoformat(),
-                'zk_proof': {
-                    'a': ['0x1234567890abcdef', '0xabcdef1234567890'],
-                    'b': [['0x1111111111111111', '0x2222222222222222'], 
-                          ['0x3333333333333333', '0x4444444444444444']],
-                    'c': ['0x5555555555555555', '0x6666666666666666']
-                },
+                'zk_proof': proof_result['proof'],
                 'public_inputs': [
                     hashlib.sha256(str(credit_score).encode()).hexdigest(),
                     hashlib.sha256(credit_grade.encode()).hexdigest(),
                     hashlib.sha256(str(max_loan_amount).encode()).hexdigest()
-                ]
+                ],
+                'verification_result': verify_result['output']
             }
             
             return {
                 'status': 'success',
-                'message': 'Credit score ZK-Proof generated successfully',
+                'message': 'Credit score ZK-Proof generated successfully using ZoKrates',
                 'proof_data': proof_data
             }
             
@@ -299,7 +358,7 @@ class ZKPUtils:
     
     def verify_credit_score_proof(self, proof_data: Dict) -> Dict:
         """
-        신용등급 ZK-Proof를 검증합니다.
+        신용등급 ZK-Proof를 실제 ZoKrates로 검증합니다.
         
         Args:
             proof_data: 검증할 proof 데이터
@@ -308,33 +367,22 @@ class ZKPUtils:
             Proof 검증 결과
         """
         try:
-            # Mock 검증 (실제로는 ZoKrates를 사용)
-            if 'zk_proof' in proof_data and 'public_inputs' in proof_data:
-                # 간단한 검증 로직
-                is_valid = (
-                    len(proof_data['zk_proof']['a']) == 2 and
-                    len(proof_data['zk_proof']['b']) == 2 and
-                    len(proof_data['zk_proof']['c']) == 2 and
-                    len(proof_data['public_inputs']) == 3
-                )
-                
-                if is_valid:
-                    return {
-                        'status': 'success',
-                        'message': 'Credit score proof verified successfully',
-                        'is_valid': True
-                    }
-                else:
-                    return {
-                        'status': 'error',
-                        'message': 'Credit score proof verification failed',
-                        'is_valid': False
-                    }
+            # ZoKrates proof 검증 실행
+            verify_result = self.verify_proof('credit_score')
+            
+            if verify_result['status'] == 'success':
+                return {
+                    'status': 'success',
+                    'message': 'Credit score proof verified successfully using ZoKrates',
+                    'is_valid': True,
+                    'verification_output': verify_result['output']
+                }
             else:
                 return {
                     'status': 'error',
-                    'message': 'Invalid proof data structure',
-                    'is_valid': False
+                    'message': 'Credit score proof verification failed',
+                    'is_valid': False,
+                    'error': verify_result.get('error', 'Unknown verification error')
                 }
                 
         except Exception as e:

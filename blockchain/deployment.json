@@ -1,0 +1,11 @@
+{
+  "contractName": "CreditGradeNFT",
+  "contractAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "deployerAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "network": "localhost",
+  "deploymentTime": "2025-08-03T13:19:56.664Z",
+  "constructorArgs": {
+    "name": "Credit Grade NFT",
+    "symbol": "CGNFT"
+  }
+}

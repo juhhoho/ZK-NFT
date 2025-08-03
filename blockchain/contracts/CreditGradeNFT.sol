@@ -60,7 +60,7 @@ contract CreditGradeNFT is ERC721, ERC721URIStorage, Ownable {
      */
     constructor(string memory name, string memory symbol) 
         ERC721(name, symbol) 
-        Ownable(msg.sender) 
+        Ownable() 
     {
         // 컨트랙트 배포자를 기본 발행자로 설정
         authorizedMinters[msg.sender] = true;
@@ -145,7 +145,7 @@ contract CreditGradeNFT is ERC721, ERC721URIStorage, Ownable {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override(ERC721, ERC721URIStorage) {
+    ) internal virtual override(ERC721) {
         super._transfer(from, to, tokenId);
         
         emit CreditGradeNFTTransferred(tokenId, from, to);

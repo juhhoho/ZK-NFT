@@ -387,47 +387,118 @@ def mint_nft():
         max_loan_amount = data['max_loan_amount']
         customer_address = data['customer_address']
         
-        # 실제 구현에서는 블록체인에 NFT를 발행합니다
-        # 여기서는 Mock NFT 발행을 시뮬레이션합니다
-        token_id = f'NFT_{proof_id}_{int(datetime.now().timestamp())}'
-        
-        nft_metadata = {
-            'token_id': token_id,
-            'name': f'Credit Grade {credit_grade} NFT',
-            'description': f'Zero-Knowledge Proof based credit grade NFT for customer {customer_id}',
-            'image': f'https://api.example.com/nft/{token_id}/image',
-            'attributes': [
-                {
-                    'trait_type': 'Credit Grade',
-                    'value': credit_grade
-                },
-                {
-                    'trait_type': 'Max Loan Amount',
-                    'value': max_loan_amount
-                },
-                {
-                    'trait_type': 'Issuer',
-                    'value': 'EXTERNAL_AGENCY_001'
-                },
-                {
-                    'trait_type': 'Issue Date',
-                    'value': datetime.now().isoformat()
+        # 실제 블록체인 연동을 사용하여 NFT 발행
+        try:
+            from utils.blockchain_utils_real import real_blockchain_utils
+            
+            # 배포자 계정 사용 (authorized minter)
+            minter_private_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+            
+            # 실제 블록체인에 NFT 발행
+            mint_result = real_blockchain_utils.mint_credit_grade_nft(
+                to_address=customer_address,
+                credit_grade=credit_grade,
+                max_loan_amount=max_loan_amount,
+                proof_id=proof_id,
+                customer_id=customer_id,
+                minter_private_key=minter_private_key
+            )
+            
+            if mint_result['status'] == 'success':
+                # NFT 메타데이터 생성
+                nft_metadata = {
+                    'token_id': mint_result['token_id'],
+                    'name': f'Credit Grade {credit_grade} NFT',
+                    'description': f'Zero-Knowledge Proof based credit grade NFT for customer {customer_id}',
+                    'image': f'https://api.example.com/nft/{mint_result["token_id"]}/image',
+                    'attributes': [
+                        {
+                            'trait_type': 'Credit Grade',
+                            'value': credit_grade
+                        },
+                        {
+                            'trait_type': 'Max Loan Amount',
+                            'value': max_loan_amount
+                        },
+                        {
+                            'trait_type': 'Proof ID',
+                            'value': proof_id
+                        },
+                        {
+                            'trait_type': 'Customer ID',
+                            'value': customer_id
+                        },
+                        {
+                            'trait_type': 'Issuer',
+                            'value': 'EXTERNAL_AGENCY_001'
+                        },
+                        {
+                            'trait_type': 'Issue Date',
+                            'value': datetime.now().isoformat()
+                        }
+                    ],
+                    'proof_id': proof_id,
+                    'customer_id': customer_id,
+                    'customer_address': customer_address
                 }
-            ],
-            'proof_id': proof_id,
-            'customer_id': customer_id,
-            'customer_address': customer_address
-        }
-        
-        response = {
-            'token_id': token_id,
-            'status': 'minted',
-            'nft_metadata': nft_metadata,
-            'blockchain_tx_hash': f'0x{hashlib.sha256(token_id.encode()).hexdigest()[:64]}',
-            'message': 'NFT가 성공적으로 발행되었습니다.'
-        }
-        
-        return jsonify(response), 200
+                
+                response = {
+                    'token_id': mint_result['token_id'],
+                    'status': 'minted',
+                    'nft_metadata': nft_metadata,
+                    'blockchain_tx_hash': mint_result['transaction_hash'],
+                    'gas_used': mint_result['gas_used'],
+                    'block_number': mint_result['block_number'],
+                    'message': 'NFT가 성공적으로 블록체인에 발행되었습니다.'
+                }
+                
+                return jsonify(response), 200
+            else:
+                return jsonify({'error': f'NFT minting failed: {mint_result["message"]}'}), 500
+                
+        except ImportError:
+            # 블록체인 유틸리티를 가져올 수 없는 경우 Mock 사용
+            print("⚠️  Real blockchain utils not available, using mock implementation")
+            
+            token_id = f'NFT_{proof_id}_{int(datetime.now().timestamp())}'
+            
+            nft_metadata = {
+                'token_id': token_id,
+                'name': f'Credit Grade {credit_grade} NFT',
+                'description': f'Zero-Knowledge Proof based credit grade NFT for customer {customer_id}',
+                'image': f'https://api.example.com/nft/{token_id}/image',
+                'attributes': [
+                    {
+                        'trait_type': 'Credit Grade',
+                        'value': credit_grade
+                    },
+                    {
+                        'trait_type': 'Max Loan Amount',
+                        'value': max_loan_amount
+                    },
+                    {
+                        'trait_type': 'Issuer',
+                        'value': 'EXTERNAL_AGENCY_001'
+                    },
+                    {
+                        'trait_type': 'Issue Date',
+                        'value': datetime.now().isoformat()
+                    }
+                ],
+                'proof_id': proof_id,
+                'customer_id': customer_id,
+                'customer_address': customer_address
+            }
+            
+            response = {
+                'token_id': token_id,
+                'status': 'minted',
+                'nft_metadata': nft_metadata,
+                'blockchain_tx_hash': f'0x{hashlib.sha256(token_id.encode()).hexdigest()[:64]}',
+                'message': 'NFT가 성공적으로 발행되었습니다. (Mock 모드)'
+            }
+            
+            return jsonify(response), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

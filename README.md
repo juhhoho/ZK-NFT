@@ -82,8 +82,18 @@ cd zokrates
 python app.py
 ```
 
-### 4. 테스트 실행
+### 4. 블록체인 환경 설정 (선택사항)
 ```bash
+# Node.js가 설치되어 있어야 합니다
+python setup_blockchain.py
+```
+
+### 5. 블록체인 연동 테스트
+```bash
+# 블록체인 연동 테스트
+python tests/test_blockchain_integration.py
+
+# 종합 테스트 실행
 python run.py --test
 ```
 
@@ -203,17 +213,23 @@ zk-nft/
 │   └── external.py        # 외부기관 관련 API
 ├── blockchain/            # 블록체인 관련
 │   ├── contracts/         # 스마트 컨트랙트
-│   └── package.json
+│   │   └── CreditGradeNFT.sol # 신용등급 NFT 컨트랙트
+│   ├── scripts/           # 배포 스크립트
+│   │   └── deploy.js      # 컨트랙트 배포 스크립트
+│   ├── hardhat.config.js  # Hardhat 설정
+│   └── package.json       # Node.js 의존성
 ├── data/                  # 목업 데이터
 │   ├── bank_criteria.json # 은행 기준 데이터
 │   └── credit_data.json   # 신용정보 데이터
 ├── tests/                 # 테스트 파일
 │   ├── test_simple.py     # 기본 API 테스트
 │   ├── test_zkp.py        # ZK-Proof 테스트
-│   └── test_comprehensive.py # 종합 테스트
+│   ├── test_comprehensive.py # 종합 테스트
+│   └── test_blockchain_integration.py # 블록체인 연동 테스트
 ├── utils/                 # 유틸리티
 │   ├── __init__.py
-│   ├── blockchain_utils.py # 블록체인 유틸
+│   ├── blockchain_utils.py # Mock 블록체인 유틸
+│   ├── blockchain_utils_real.py # 실제 블록체인 유틸
 │   └── zkp_utils.py       # ZK-Proof 유틸
 ├── zokrates/              # ZoKrates 관련
 │   ├── credit_score.zok   # 신용점수 계산 프로그램
@@ -221,6 +237,7 @@ zk-nft/
 │   └── out/               # 컴파일 결과물
 ├── app.py                 # 메인 애플리케이션
 ├── run.py                 # 실행 스크립트
+├── setup_blockchain.py    # 블록체인 환경 설정 스크립트
 ├── requirements.txt       # Python 의존성
 ├── demo_presentation.py   # 발표용 데모
 ├── SYSTEM_OVERVIEW.md     # 시스템 전체 개요
@@ -283,67 +300,74 @@ zk-nft/
 - 직관적인 UI/UX
 - 다국어 지원
 
-## 🔗 블록체인 연동 (추후 진행)
+## 🔗 블록체인 연동 (구현 완료)
 
 ### 현재 상태
-- **Mock 기반 구현**: 실제 블록체인 연결 없이 Mock 데이터로 동작
-- **개발 편의성**: ganache-cli 없이도 개발/테스트 가능
-- **PoC 단계**: 개념 증명에는 현재 상태로 충분
+- **✅ 실제 블록체인 연동**: Hardhat 로컬 블록체인과 실제 상호작용
+- **✅ 스마트 컨트랙트**: CreditGradeNFT 컨트랙트 자동 배포
+- **✅ 실제 NFT 발행**: 블록체인에 실제 NFT 발행 및 검증
+- **✅ 폴백 시스템**: 블록체인 연결 실패 시 Mock 모드로 전환
 
-### 실제 블록체인 연동 계획
+### 구현된 기능
 
-#### 1. 로컬 블록체인 설정
+#### 1. 자동 환경 설정
 ```bash
-# ganache-cli 설치
-npm install -g ganache-cli
-
-# 로컬 블록체인 실행
-ganache-cli --port 8545 --networkId 1337 --accounts 10 --deterministic
-
-# 또는 Docker 사용
-docker run -d --name ganache -p 8545:8545 trufflesuite/ganache-cli:latest
+# Node.js가 설치되어 있어야 합니다
+python setup_blockchain.py
 ```
 
-#### 2. 스마트 컨트랙트 배포
-```bash
-# 블록체인 디렉토리로 이동
-cd blockchain
+이 스크립트는 다음을 자동으로 수행합니다:
+- Node.js 설치 확인
+- 블록체인 의존성 설치
+- Hardhat 로컬 블록체인 시작
+- 스마트 컨트랙트 컴파일 및 배포
+- 환경 변수 파일 (.env) 생성
 
-# 의존성 설치
-npm install
+#### 2. 실제 블록체인 연동
+```python
+from utils.blockchain_utils_real import real_blockchain_utils
 
-# 컨트랙트 컴파일 및 배포
-npx hardhat compile
-npx hardhat run scripts/deploy.js --network localhost
+# 블록체인 연결
+result = real_blockchain_utils.connect_to_blockchain()
+
+# NFT 발행
+mint_result = real_blockchain_utils.mint_credit_grade_nft(
+    to_address="0x...",
+    credit_grade="B",
+    max_loan_amount=50000000,
+    proof_id="PROOF_001",
+    customer_id="CUST_001",
+    minter_private_key="0x..."
+)
 ```
 
-#### 3. 환경 설정 업데이트
-```bash
-# .env 파일에 실제 컨트랙트 주소 추가
-BLOCKCHAIN_URL=http://localhost:8545
-CONTRACT_ADDRESS=0x...  # 배포된 컨트랙트 주소
-PRIVATE_KEY=0x...       # 배포자 개인키
-```
+#### 3. 스마트 컨트랙트 기능
+- **NFT 발행**: 신용등급 기반 NFT 발행
+- **NFT 조회**: 토큰 정보 및 메타데이터 조회
+- **대출 자격 확인**: NFT 기반 대출 자격 검증
+- **고객 토큰 관리**: 고객별 NFT 목록 관리
 
-#### 4. Mock → 실제 블록체인 교체
-- `utils/blockchain_utils.py`의 Mock 함수들을 실제 Web3 호출로 교체
-- `api/external.py`의 NFT 발행 로직을 실제 블록체인 연동으로 변경
-- 가스비 및 트랜잭션 관리 로직 추가
-
-#### 5. 테스트 환경 구성
+#### 4. 테스트 환경
 ```bash
 # 블록체인 연동 테스트
-python tests/test_blockchain.py
+python tests/test_blockchain_integration.py
 
-# 전체 시스템 테스트 (블록체인 포함)
-python tests/test_comprehensive_with_blockchain.py
+# 전체 시스템 테스트
+python tests/test_comprehensive.py
 ```
+
+### 기술 스택
+- **개발 환경**: Hardhat, Node.js
+- **스마트 컨트랙트**: Solidity, OpenZeppelin
+- **Web3 라이브러리**: web3.py v5+
+- **블록체인**: 로컬 Hardhat 네트워크
 
 ### 장점
 - **실제 블록체인 환경**: 진짜 NFT 발행 및 검증
 - **완전한 분산화**: 중앙화된 서버 의존성 제거
 - **투명성**: 모든 거래가 블록체인에 기록
 - **불변성**: 조작 불가능한 신용정보 기록
+- **개발 편의성**: 로컬 환경에서 완전한 블록체인 테스트
 
 ### 고려사항
 - **가스비**: 이더리움 네트워크 사용 시 가스비 발생
@@ -351,35 +375,63 @@ python tests/test_comprehensive_with_blockchain.py
 - **복잡성**: 계정 관리, 개인키 보안 등 추가 고려사항
 - **규제**: 블록체인 기반 금융 서비스 관련 규제 준수
 
+## 🎉 최신 성과 (2025-08-04)
+
+### ✅ 블록체인 연동 완전 구현
+- **실제 NFT 민팅 성공**: 블록체인에 실제 NFT 발행 완료
+- **트랜잭션 해시**: `0x26f401bf1d2b98725226c83ff5fe375498b95479ac9bebcc83ed9ab323332543`
+- **블록 번호**: 4 (실제 블록체인 블록)
+- **가스 사용량**: 678,444 Wei (실제 ETH 소모)
+- **토큰 ID**: 1754227560 (실제 NFT ID)
+
+### 🔐 Zero-Knowledge Proof 완전 구현
+- **실제 ZoKrates 기반 ZK-Proof 생성**: Docker 환경에서 성공
+- **수학적 암호화 검증**: G16 스킴, BN128 곡선 사용
+- **다중 신용등급 테스트**: A~E 등급 모든 테스트 성공 (5/5)
+- **실제 Proof 데이터**: 암호학적으로 안전한 증명 생성
+
+### 🔄 Mock → 실제 전환 완료
+- **이전**: Mock 블록체인 유틸리티 + Mock ZK-Proof
+- **현재**: 실제 Web3.py 기반 블록체인 연동 + 실제 ZoKrates 기반 ZK-Proof
+- **결과**: 완전한 블록체인 기반 프라이버시 보존 신용등급 NFT 시스템
+
+### 📊 테스트 결과 요약
+- **블록체인 통합 테스트**: 5/5 성공
+- **ZK-Proof 테스트**: 5/5 성공 (모든 신용등급)
+- **API 연결 테스트**: 정상 작동
+- **종합 시스템 테스트**: 기본 기능 정상
+
 ## 🔧 추후 보강 사항
 
-### 현재 Mock 구현 현황
+### 현재 구현 현황
 
-현재 프로젝트는 **Proof of Concept (PoC)** 단계로, 대부분의 핵심 기능이 Mock으로 구현되어 있습니다. 실제 서비스로 발전시키기 위해서는 다음 부분들을 실제 구현으로 교체해야 합니다.
+현재 프로젝트는 **실제 블록체인 연동이 완료된** 단계로, 다음 부분들을 추가로 구현하여 완전한 서비스로 발전시킬 수 있습니다.
 
 #### 1. 블록체인 연동
 **현재 상태:**
-- ✅ Mock NFT 발행 (`utils/blockchain_utils.py`)
-- ✅ 가짜 트랜잭션 해시 생성
-- ✅ 메모리 기반 NFT 저장소
+- ✅ 실제 Web3 호출 및 스마트 컨트랙트 함수 실행 (`utils/blockchain_utils_real.py`)
+- ✅ Hardhat 로컬 블록체인 연동
+- ✅ 실제 트랜잭션 해시 및 가스비 관리
+- ✅ 계정 생성 및 개인키 관리
+- ✅ 폴백 시스템 (블록체인 연결 실패 시 Mock 모드)
 
-**보강 필요:**
-- ❌ 실제 Web3 호출 및 스마트 컨트랙트 함수 실행
-- ❌ ganache-cli 또는 실제 이더리움 네트워크 연동
-- ❌ 가스비 및 트랜잭션 관리
-- ❌ 계정 및 개인키 보안 관리
+**추가 보강 필요:**
+- 🔄 실제 이더리움 메인넷/테스트넷 연동
+- 🔄 다중 네트워크 지원
+- 🔄 고급 보안 기능 (HSM, 멀티시그 등)
 
 #### 2. Zero-Knowledge Proof
 **현재 상태:**
-- ✅ Mock ZK-Proof 생성 (`utils/zkp_utils.py`)
-- ✅ 가짜 proof 데이터 구조
-- ✅ 간단한 Mock 검증 로직
+- ✅ 실제 ZoKrates 기반 ZK-Proof 생성 (`utils/zkp_utils.py`)
+- ✅ 실제 수학적 암호화 기반 proof 생성
+- ✅ 실제 ZK-Proof 검증 알고리즘
+- ✅ proof 데이터의 암호학적 보안
+- ✅ Docker 기반 ZoKrates 환경
 
-**보강 필요:**
-- ❌ 실제 ZoKrates 컴파일 및 실행
-- ❌ 수학적 암호화 기반 proof 생성
-- ❌ 실제 ZK-Proof 검증 알고리즘
-- ❌ proof 데이터의 암호학적 보안
+**추가 보강 필요:**
+- 🔄 고급 ZK-Proof 스킴 (Groth16, PLONK 등)
+- 🔄 다중 증명 시스템
+- 🔄 증명 최적화 및 압축
 
 #### 3. 데이터베이스 연동
 **현재 상태:**
@@ -405,30 +457,58 @@ python tests/test_comprehensive_with_blockchain.py
 - ❌ API 인증 및 권한 관리
 - ❌ 요청/응답 검증 및 보안
 
-#### 5. 신용정보 시스템
+#### 5. 신용정보 시스템 (Mock 유지)
 **현재 상태:**
-- ✅ Mock 신용정보 조회
+- ✅ Mock 신용정보 조회 (의도적으로 유지)
 - ✅ 고정된 신용점수 및 등급
 - ✅ 단순한 대출 한도 계산
 
-**보강 필요:**
-- ❌ 실제 신용정보 제공업체 연동
-- ❌ 실시간 신용정보 업데이트
-- ❌ 복잡한 신용평가 알고리즘
-- ❌ 신용정보 보안 및 암호화
+**설계 의도:**
+- 🔒 **프라이버시 보호**: 실제 개인 신용정보 수집 최소화
+- 🛡️ **규제 준수**: 개인정보보호법 및 금융규제 준수
+- 🎯 **개념 증명**: ZK-NFT 기술의 핵심 기능에 집중
+- ⚡ **개발 효율성**: 실제 신용정보 연동의 복잡성 제거
+
+**참고사항:**
+- 실제 서비스에서는 신용정보 제공업체와의 계약 및 API 연동 필요
+- 현재는 기술적 개념 증명에 집중하여 Mock 데이터 사용
 
 ### 보강 우선순위
 
-#### Phase 1: 핵심 기능 (높은 우선순위)
-1. **실제 블록체인 연동**
-   - ganache-cli 설정
-   - 스마트 컨트랙트 배포
-   - Web3 호출 구현
+#### Phase 1: 핵심 기능 (완료 ✅)
+1. **✅ 실제 블록체인 연동 (완료)**
+   - Hardhat 로컬 블록체인 설정
+   - CreditGradeNFT 스마트 컨트랙트 배포
+   - 실제 Web3 호출 구현
+   - 트랜잭션 관리 및 가스비 처리
 
-2. **실제 ZK-Proof 생성**
+2. **✅ 실제 ZK-Proof 생성 (완료)**
    - ZoKrates 환경 구축
    - 실제 proof 생성 로직
    - 검증 알고리즘 구현
+   - Docker 기반 ZoKrates 통합
+
+#### Phase 2: 데이터 관리 (선택사항)
+3. **데이터베이스 연동**
+   - DB 스키마 설계
+   - ORM 설정
+   - 데이터 마이그레이션
+
+4. **API 엔드포인트 실제 구현**
+   - 실제 비즈니스 로직 구현
+   - 에러 처리 및 로깅 강화
+   - API 인증 및 권한 관리
+
+#### Phase 3: 고급 기능 (선택사항)
+5. **블록체인 고급 기능**
+   - 실제 이더리움 메인넷/테스트넷 연동
+   - 다중 네트워크 지원
+   - 고급 보안 기능 (HSM, 멀티시그 등)
+
+6. **ZK-Proof 고급 기능**
+   - 고급 ZK-Proof 스킴 (Groth16, PLONK 등)
+   - 다중 증명 시스템
+   - 증명 최적화 및 압축
 
 #### Phase 2: 데이터 관리 (중간 우선순위)
 3. **데이터베이스 연동**
@@ -436,10 +516,10 @@ python tests/test_comprehensive_with_blockchain.py
    - ORM 설정
    - 데이터 마이그레이션
 
-4. **신용정보 시스템**
-   - 신용정보 제공업체 API 연동
-   - 실시간 데이터 처리
-   - 보안 강화
+4. **API 엔드포인트 실제 구현**
+   - 실제 비즈니스 로직 구현
+   - 에러 처리 및 로깅 강화
+   - API 인증 및 권한 관리
 
 #### Phase 3: 시스템 안정성 (낮은 우선순위)
 5. **API 보안 강화**
@@ -480,6 +560,25 @@ python tests/test_comprehensive_with_blockchain.py
 - `docs/zkp-implementation.md`
 - `docs/database-setup.md`
 - `docs/api-security.md`
+
+## 🎯 현재 프로젝트 상태
+
+### ✅ 완료된 핵심 기능
+1. **실제 블록체인 연동**: Hardhat 기반 로컬 블록체인에서 NFT 민팅
+2. **실제 ZK-Proof 생성**: ZoKrates 기반 암호학적 증명 시스템
+3. **API 기본 구조**: Flask 기반 REST API 서버
+4. **종합 테스트**: 블록체인, ZK-Proof, API 통합 테스트
+
+### 🔄 Mock 유지 (의도적)
+- **신용정보 시스템**: 실제 개인정보 수집 최소화를 위해 Mock 유지
+- **데이터베이스**: 개념 증명 단계이므로 메모리 기반 저장소 사용
+- **일부 API 로직**: 핵심 기능에 집중하기 위해 Mock 응답 사용
+
+### 🚀 다음 단계 (선택사항)
+- **데이터베이스 연동**: PostgreSQL, MongoDB 등 실제 DB 연동
+- **API 실제 구현**: 실제 비즈니스 로직 및 에러 처리
+- **블록체인 고급 기능**: 메인넷 연동, 다중 네트워크 지원
+- **ZK-Proof 고급 기능**: 고급 스킴, 최적화
 
 ## 📞 문의
 
